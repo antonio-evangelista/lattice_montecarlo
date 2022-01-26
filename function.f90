@@ -7,7 +7,6 @@ module function
   real(dp), allocatable :: phi(:)
   real(dp), parameter :: pigreco= 3.14159 26535 89793
 
-  !forse interface è inutile 
   interface
      function H(phi, pi) result(y)
        real(dp) , allocatable  :: phi(:)
