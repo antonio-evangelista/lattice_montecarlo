@@ -3,6 +3,7 @@ module function
 
   public :: S
   public :: H
+  public :: jump
 
   real(dp), allocatable :: phi(:)
   real(dp), parameter :: pigreco= 3.14159 26535 89793
@@ -15,22 +16,52 @@ module function
      end function H
   end interface
 
-  contains
+contains
 
-  subroutine S(phi)
-    real(dp), allocatable :: phi(:)
-    real(dp) :: kin
+  subroutine jump(phi, mu)
+    real(dp), intent(inout) :: phi(:)
+    integer :: mu
+
+    case(mu==0)
+       phi(i)=phi(i+L*L)
+    case(mu==1)
+       phi(i)=phi(i+1)
+    case(mu==2)
+       phi(i)=phi(i+L)
+    case(mu==3)   !da 3 a 5 si intendono le direzioni negative, ancora non so bene come implementare le condizioni periodice al contorno.
+       phi(i)=phi(i-L*L)
+    case(mu==4)
+       phi(i)=phi(i-1)
+    case(mu==5)
+       phi(i)=phi(i-L)
+
+  end subroutine jump
+     
+
+  
+
+  subroutine S(phi, k, g, y)
+    real(dp), intent(in) :: phi(:)
+    real(dp), intent(in) :: k !costante adimonsionale che fa le veci della massa
+    real(dp), intent(in) :: g !coupling dell'interazione
+    real(dp)             :: kin !termine cinetico
     real(dp), intent(out) :: y
-    integer :: i, d, n
+    integer :: i, mu, nu, d, n
 
     n=size(phi)
-    
-    do i=0, 2
-       !kin+=
-    end do
+    allocate(kin(n))
+   
     
     do i=0, n
-       y+= kin ! + blablabla
+       
+        kin=0
+        do mu=0, 2
+           nu=mu+3
+           kin+=call(jump(phi(i), mu)) + call(jump(phi(i), nu)
+        end do
+    
+        y+= -phi(i)*kin + 0.5_dp*k*phi(i)*phi(i)+ &
+             0.0416666666666666_dp**phi(i)*phi(i)*phi(i)*phi(i)
     end do
   end subroutine S
 
