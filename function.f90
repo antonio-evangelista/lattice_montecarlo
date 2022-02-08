@@ -45,13 +45,13 @@ contains
     real(dp), intent(in) :: phi(:,:,:) !compo scalare in 2+1 dimensioni
     real(dp), intent(in) :: k !costante adimonsionale che fa le veci della massa
     real(dp), intent(in) :: g !coupling dell'interazione
-    real(dp)             :: kin !termine cinetico
+    real(dp)  allocatable :: kin(:,:,:) !termine cinetico
     real(dp), intent(out) :: y
     integer :: i, mu, nu, d, n
 
     n=size(phi)
     
-    do i=0, n
+    do i=0, n !c'è da ripensarlo un attimo in modo vettoriale
        
         kin=0
         do mu=0, 2
@@ -81,6 +81,19 @@ contains
        pi(:,:,i)=sqrt(-2*log(1-x(:,:,i)))*cos(2*pigreco*(1-x(:,:,i)))
     end do    
   end subroutine init_pi
+  
+  subroutine grad_s(phi, y)
+    real(dp), intent(in) :: phi(:,:,:)
+    real(dp)  :: kin
+    real(dp), intent(out) :: y(:,:,:)
+    
+     kin=0
+        do mu=0, 2
+           nu=mu+3
+           kin(:,:,:)=call(jump(phi, mu)) + call(jump(phi, nu)
+        end do
+    y=-kin+ k*phi + 0.166666666666666_dp*phi*phi*phi !devo stare attento perche voglio che le componenti siano elevate al cubo e non siano fatti prodotti scalari
+  end subroutine grad_s
 
   function H(phi,pi) return(y)
     real(dp), intent(in) :: action
