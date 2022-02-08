@@ -5,43 +5,44 @@ module function
   public :: H
   public :: jump
 
-  real(dp), allocatable :: phi(:)
+  real(dp), allocatable :: phi(:,:,:)
   real(dp), parameter :: pigreco= 3.14159 26535 89793
 
   interface
      function H(phi, pi) result(y)
-       real(dp) , allocatable  :: phi(:)
-       real(dp) , intent(in)   :: pi
-       real(dp) , intent(out)  :: y(t)
+       real(dp) , allocatable  :: phi(:,:,:)
+       real(dp) , allocatable  :: pi(:,:,:)
+       real(dp) , intent(out)  :: y
      end function H
   end interface
 
 contains
 
   subroutine jump(phi, mu)
-    real(dp), intent(inout) :: phi(:)
-    integer :: mu
+    real(dp), intent(inout) :: phi(:,:,:)
+    integer :: mu,L
 
     case(mu==0)
-       phi(i)=phi(i+L*L)
+       phi(i,:,:)=phi(i+1,:,:)
     case(mu==1)
-       phi(i)=phi(i+1)
+       phi(:,i,:)=phi(:,i+1,:)
     case(mu==2)
-       phi(i)=phi(i+L)
-    case(mu==3)   !da 3 a 5 si intendono le direzioni negative, ancora non so bene come implementare le condizioni periodice al contorno.
-       phi(i)=phi(i-L*L)
+       phi(:,:,i)=phi(:,:,i+1)
+    case(mu==3)   !da 3 a 5 si intendono le direzioni negative
+       phi(i,:,:)=phi(i+L-1,:,:)
     case(mu==4)
-       phi(i)=phi(i-1)
+       phi(:,i,:)=phi(:,i+L-1,:)
     case(mu==5)
-       phi(i)=phi(i-L)
+       phi(:,:,i)=phi(:,:,i+L-1)
 
   end subroutine jump
      
 
-  
+  ! S=int d3x -phi dmu dmu phi + 1/2m^2 phi^2 + lambda/4! phi^4
+  ! il laplaciano l'ho discretizzato con la derivata centrale
 
   subroutine S(phi, k, g, y)
-    real(dp), intent(in) :: phi(:)
+    real(dp), intent(in) :: phi(:,:,:) !compo scalare in 2+1 dimensioni
     real(dp), intent(in) :: k !costante adimonsionale che fa le veci della massa
     real(dp), intent(in) :: g !coupling dell'interazione
     real(dp)             :: kin !termine cinetico
@@ -49,8 +50,6 @@ contains
     integer :: i, mu, nu, d, n
 
     n=size(phi)
-    allocate(kin(n))
-   
     
     do i=0, n
        
@@ -66,9 +65,9 @@ contains
   end subroutine S
 
   subroutine init_pi(phi,pi)
-    real(dp), intent(in) :: phi(:)
-    real(dp), allocatable :: x(:)
-    real(dp), intent(out) :: pi(:)
+    real(dp), intent(in) :: phi(:,:,:)
+    real(dp), allocatable :: x(:,:,:)
+    real(dp), intent(out) :: pi(:,:,:)
     integer :: n, i
 
     n=size(phi)
@@ -77,24 +76,24 @@ contains
     call random_number(x)
 
     do i=1,n
-       pi(i)=sqrt(-2*log(1-x(i)))*cos(2*pigreco*(1-x(i)))
+       pi(i,:,:)=sqrt(-2*log(1-x(i:,:)))*cos(2*pigreco*(1-x(i,:,:)))
+       pi(:,i,:)=sqrt(-2*log(1-x(:,i,:)))*cos(2*pigreco*(1-x(:,i,:)))
+       pi(:,:,i)=sqrt(-2*log(1-x(:,:,i)))*cos(2*pigreco*(1-x(:,:,i)))
     end do    
   end subroutine init_pi
 
   function H(phi,pi) return(y)
     real(dp), intent(in) :: action
-    real(dp), intent(in) :: pi(:)
-    real(dp), intent(in) :: phi(:)
+    real(dp),            :: pi(:,:,:)
+    real(dp), intent(in) :: phi(:,:,:)
     real(dp), intent(out) :: y
     integer :: i, n
 
     n=size(pi)
 
     action=call(S(phi))
-    do i=1,n
-       y+=pi(i)*pi(i)
-    end do
-    y+=action
+    y=action + pi*pi
+    
   end function H
   
   
