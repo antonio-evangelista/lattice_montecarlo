@@ -6,53 +6,30 @@ module solver
   public :: leapfrog
 
 contains
-
-  subroutine simplex_2(u, v, dt, mul)
-    real(dp), intent(in) :: u(:,:,:) !campo
-    real(dp), intent(in) :: v(:,:,:) !impulso fittizio
-    real(dp), allocatable :: u_i(:,:,:) 
-    real(dp), intent(out) :: u_f(:,:,:)
-    real(dp), allocatable :: v_i(:,:,:)
-    real(dp), intent(out) :: v_f(:,:,:)
-    real(dp) :: grad_s1 !la derivata del potenziale, quindi dell'azione(devo ancora definire sia azione che sua derivata)
-    real(dp) :: grad_s2
-    real(dp) :: dt
-    real(dp) :: mul
-    integer :: dim
-
-    dim=size(u)
-    allocate(u_i(dim))
-    allocate(u_f(dim))
-    allocate(v_i(dim))
-    allocate(v_f(dim))  
-
-    dt= mul*dt
-
-    u_i=u
-    v_i=v
-    
-    grad_s1=call(grad_s(u_i))
-    u_f=u_i + dt*(v_f -0.5_dp*dt*grad_s1)
-    grad_s2=call(grad_s(u_f))
-    v_f=v_i - 0.5_dp*dt*(grad_s1+grad_s2)
-
-  end subroutine simplex_2
-  
   
   !l'idea è di implementare un integratore simplettico del quardo ordine
   subroutine leapfrog(u, v, tau, n)  !devo capire come selzione u o v
     real(dp), intent(inout) :: u(:) !prende il ruolo del campo
     real(dp), intent(inout) :: v(:) !prende il ruolo dell'impulso associato al campo
-    real(dp) :: dt !passo di integrazione nel tempo di evoluzione del microstato: n*dt=tau
-    real(dp) :: tau
-    integer :: n,i,j
+    real(dp) :: grad_s1 !la derivata del potenziale hamiltoniano, cioè dell'azione
+    real(dp) :: grad_s2
+    real(dp) :: dt      ! passo di integrazione nel tempo di evoluzione del microstato: n*dt=tau
+    real(dp) :: mul    ! fattori che entrano nell'operatore simplettico di ordine 4 
+    integer  :: dim
+    real(dp) :: tau  ! non ho capito in base a cosa lo decido
+    integer  :: n,i,j
 
     dt=(tau/n)_dp
-    do i=0, n-1
-      do j=0,2
-        u(:,:,:)=call(simplex_2(u,v,alpha))
-        v(:,:,:)=call(simplex_2(u,v,alpha))
-      end do
+
+    do i=1, n
+       do j=1,3
+          if j==(1.or.3) mul=!valore
+          elseif mul=!valore
+          grad_s1=call(grad_s(u))
+          u=u + mul*dt*(v -0.5_dp*mul*dt*grad_s1)
+          grad_s2=call(grad_s(u))
+          v=v- 0.5_dp*mul*dt*(grad_s1+grad_s2)
+       end do
     end do
     
   end subroutine leapfrog
@@ -61,11 +38,11 @@ contains
     real(dp) :: H_i
     real(dp) :: H_f
     real(dp) :: delta_H
-    real(dp), allocatable   :: phi_i(:,:,:)
-    real(dp), allocatable   :: pi_i(:,:,:)
-    real(dp), allocatable   :: phi_f(:,:,:)
-    real(dp), allocatable   :: pi_f(:,:,:)
-    real(dp), allocatable   :: phi(:,:,:)
+    real(dp), intent(inout)  :: phi(:,:,:)
+    real(dp), allocatable :: phi_i(:,:,:)
+    real(dp), allocatable :: pi_i(:,:,:)
+    real(dp), allocatable :: phi_f(:,:,:)
+    real(dp), allocatable :: pi_f(:,:,:)
     real(dp)  :: prob
     real(dp)  :: r
     integer   :: n
