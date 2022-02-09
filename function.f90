@@ -64,18 +64,18 @@ contains
     end do
   end subroutine S
 
-  subroutine init_pi(phi,pi)
+  subroutine init_pi(dim,pi)
     real(dp), intent(in) :: phi(:,:,:)
     real(dp), allocatable :: x(:,:,:)
     real(dp), intent(out) :: pi(:,:,:)
-    integer :: n, i
+    integer, intent(in) :: dim
+    integer :: i
 
-    n=size(phi)
-    allocate(x(n))
-    allocate(pi(n))  
+    allocate(x(dim,dim,dim))
+    allocate(pi(dim,dim,dim))  
     call random_number(x)
 
-    do i=1,n
+    do i=1,dim
        pi(i,:,:)=sqrt(-2*log(1-x(i:,:)))*cos(2*pigreco*(1-x(i,:,:)))
        pi(:,i,:)=sqrt(-2*log(1-x(:,i,:)))*cos(2*pigreco*(1-x(:,i,:)))
        pi(:,:,i)=sqrt(-2*log(1-x(:,:,i)))*cos(2*pigreco*(1-x(:,:,i)))
