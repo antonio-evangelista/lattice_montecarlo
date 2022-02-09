@@ -11,9 +11,33 @@ program main
   real(dp) :: k       ! parametro di massa adimensionale
   real(dp) :: g       ! coupling adimensionale
   integer  :: L       ! parametro di discretizzazione del reticolo
-  integer  :: N       ! numero di step della catena di Markov (indicativamente credo sui 10^5)
+  integer  :: Nstep   ! numero di step della catena di Markov (indicativamente credo sui 10^5)
   real(dp) :: a       ! passo reticolare lo prendo uguale sia nella direzione spaziale che temporale
   integer  :: i
+  character(50), allocatable :: args(:)
+  real(dp), allocatable :: param(:)
+
+  
+  if (command_argument_count() < 5) then
+      write(*,*) "Nstep L a m2 lambda"
+      stop
+  endif
+
+  num_args = command_argument_count()
+  allocate(args(num_args))
+  allocate(param(num_args))
+    
+  do i = 1, num_args
+     call get_command_argument(i, args(i))   
+     read(args(i),*) param(i)
+   end do
+
+   Nstep=int(param(1))
+   L=(param(2))
+   a=param(3)
+   m2=param(4)
+   lambda=param(5)
+  
   allocate(phi(L,L,L))
   allocate(pi(L,L,L))
 
