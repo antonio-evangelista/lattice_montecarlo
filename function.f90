@@ -47,20 +47,21 @@ contains
     real(dp), intent(in) :: g !coupling dell'interazione
     real(dp)  allocatable :: kin(:,:,:) !termine cinetico
     real(dp), intent(out) :: y
-    integer :: i, mu, nu, d, n
-
-    n=size(phi)
+    integer :: i, mu, nu, d, dim
+    
+    dim=size(phi)
+    allocate(kin(dim,dim,dim))
     
     do i=0, n !c'è da ripensarlo un attimo in modo vettoriale
        
         kin=0
         do mu=0, 2
            nu=mu+3
-           kin+=call(jump(phi(i), mu)) + call(jump(phi(i), nu)
+           kin=call(jump(phi, mu)) + call(jump(phi, nu)
         end do
     
-        y+= -phi(i)*kin + 0.5_dp*k*phi(i)*phi(i)+ &
-             0.0416666666666666_dp**phi(i)*phi(i)*phi(i)*phi(i)
+        y+= -phi*kin + 0.5_dp*k*phi*phi+ & !spero faccia il prodotto elemento per elemento a quel punto posso togliere il loop su i
+             0.0416666666666666_dp**phi*phi*phi*phi
     end do
   end subroutine S
 
@@ -83,30 +84,31 @@ contains
   end subroutine init_pi
   
   subroutine grad_s(phi, y)
-    real(dp), intent(in) :: phi(:,:,:)
-    real(dp)  :: kin
+    real(dp), intent(in)  :: phi(:,:,:)
+    real(dp), allocatable :: kin(:,:,:)
     real(dp), intent(out) :: y(:,:,:)
     
-     kin=0
+    dim=size(phi)
+    allocate(kin(dim,dim,dim))  
+    allocate(y(dim,dim,dim))
+    
+    kin=0
         do mu=0, 2
            nu=mu+3
            kin(:,:,:)=call(jump(phi, mu)) + call(jump(phi, nu)
         end do
+        
     y=-kin+ k*phi + 0.166666666666666_dp*phi*phi*phi !devo stare attento perche voglio che le componenti siano elevate al cubo e non siano fatti prodotti scalari
   end subroutine grad_s
 
   function H(phi,pi) return(y)
     real(dp), intent(in) :: action
-    real(dp),            :: pi(:,:,:)
+    real(dp), intent(in) :: pi(:,:,:)
     real(dp), intent(in) :: phi(:,:,:)
     real(dp), intent(out) :: y
-    integer :: i, n
-
-    n=size(pi)
-
+   
     action=call(S(phi))
     y=action + pi*pi
-    
   end function H
   
   
