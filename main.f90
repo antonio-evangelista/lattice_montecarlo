@@ -43,7 +43,7 @@ program main
 
   call random_number(phi)
  
-  do i=1, N
+  do i=1, Nstep
      call(init_pi(L,pi)) ! inizializzo l'impulso,forse non serve allocare pi all'interno di init_pi
      call(metropolis(phi,pi))
 
