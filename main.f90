@@ -6,6 +6,7 @@ program main
 
   real(dp), allocatable :: phi(:,:,:) ! campo scalare reale in 2+1 dimensioni
   real(dp), allocatable :: pi(:,:,:)  ! impulso fittizio per la dinamica del montecarlo
+  real(dp), allocatable :: correlatore(:,:,:) ! correlatore a due punti
   real(dp) :: lambda     ! coupling dimensionale dell'interazione
   real(dp) :: m2      ! massa quadra dello scalare
   real(dp) :: k       ! parametro di massa adimensionale
@@ -37,9 +38,13 @@ program main
    a=param(3)
    m2=param(4)
    lambda=param(5)
+   
+   g=lambda*a
+   k=a*a*m2+ 6_dp ! in generale sarebbe m2*a^2 + 2*D dove D è la dimensione D=2+1 in questo caso
   
   allocate(phi(L,L,L))
   allocate(pi(L,L,L))
+  allocate(correlatore(L,L,L))
 
   call random_number(phi)
  
@@ -49,6 +54,8 @@ program main
 
      ! per calcolare il correlatore devo capire quando arriva a termalizzazione
      ! una volta raggiunta la termalizzazione sommo: sum_x phi(x)phi(0)esp(-S(phi))
+     correlatore(:,:,:)+=phi(:,:,:)*phi(0,0,0)*call(S(phi, k, g, y))
+     
   end do
   
   
