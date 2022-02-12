@@ -9,10 +9,10 @@ contains
   
   !l'idea è di implementare un integratore simplettico del quardo ordine
   subroutine leapfrog(u, v, tau, n)  !devo capire come selzione u o v
-    real(dp), intent(inout) :: u(:) !prende il ruolo del campo
-    real(dp), intent(inout) :: v(:) !prende il ruolo dell'impulso associato al campo
+    real(dp), intent(inout) :: u(:,:,:) !prende il ruolo del campo
+    real(dp), intent(inout) :: v(:,:,:) !prende il ruolo dell'impulso associato al campo
+    real(dp), allocatable   :: v1(:,:,:)
     real(dp) :: grad_s1 !la derivata del potenziale hamiltoniano, cioè dell'azione
-    real(dp) :: grad_s2
     real(dp) :: dt      ! passo di integrazione nel tempo di evoluzione del microstato: n*dt=tau
     real(dp) :: mul    ! fattori che entrano nell'operatore simplettico di ordine 4 
     integer  :: dim
@@ -20,15 +20,18 @@ contains
     integer  :: n,i,j
 
     dt=(tau/n)_dp
+    allocate(v1(L,L,L)) !c'è da aggiustare qualcosa
 
     do i=1, n
        do j=1,3
           if j==(1.or.3) mul=!valore
           elseif mul=!valore
-          grad_s1=call(grad_s(u))
-          u=u + mul*dt*(v -0.5_dp*mul*dt*grad_s1)
-          grad_s2=call(grad_s(u))
-          v=v- 0.5_dp*mul*dt*(grad_s1+grad_s2)
+          end if
+
+          grad_s1=call(grad_s(u+0.5_dp*mul*dt*v))
+          v1=v 
+          v=v - mul*dt*grad_s1
+          u=u + 0.5_dp*mul*dt*(v1+v)
        end do
     end do
     
