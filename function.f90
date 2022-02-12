@@ -23,22 +23,45 @@ contains
     integer :: mu,L
 
     case(mu==0)
-       phi(i,:,:)=phi(i+1,:,:)
+       if i==L
+          phi(i,:,:)=phi(1,:,:) ! devo stare attento a cose definisco gli array se partono da 0 o da 1, ho considerato da 1
+       else
+          phi(i,:,:)=phi(i+1,:,:)
+       end if       
     case(mu==1)
-       phi(:,i,:)=phi(:,i+1,:)
+       if i==L
+          phi(:,i,:)=phi(:,1,:)
+       else
+          phi(:,i,:)=phi(:,i+1,:)
+       end if
     case(mu==2)
-       phi(:,:,i)=phi(:,:,i+1)
+       if i==L
+          phi(:,:,i)=phi(:,:,1)
+       else if
+          phi(:,:,i)=phi(:,:,i+1)
+       end if
     case(mu==3)   !da 3 a 5 si intendono le direzioni negative
-       phi(i,:,:)=phi(i+L-1,:,:)
+       if i==1
+          phi(i,:,:)=phi(L,:,:)
+       else
+          phi(i,:,:)=phi(i-1,:,:)
+       end if   
     case(mu==4)
-       phi(:,i,:)=phi(:,i+L-1,:)
+       if i==1
+          phi(:,i,:)=phi(:,L,:)
+       else
+          phi(:,i,:)=phi(:,i-1,:)
+       end if
     case(mu==5)
-       phi(:,:,i)=phi(:,:,i+L-1)
-
+       if i==1
+          phi(:,:,i)=phi(:,:,L)
+       else
+          phi(:,:,i)=phi(:,:,i-1)
+       end if
   end subroutine jump
      
 
-  ! S=int d3x -phi dmu dmu phi + 1/2m^2 phi^2 + lambda/4! phi^4
+  ! S=int d3x -1/2 phi dmu dmu phi + 1/2m^2 phi^2 + lambda/4! phi^4
   ! il laplaciano l'ho discretizzato con la derivata centrale
 
   subroutine S(phi, k, g, y)
@@ -52,7 +75,6 @@ contains
     dim=size(phi)
     allocate(kin(dim,dim,dim))
     
-    do i=0, n !c'è da ripensarlo un attimo in modo vettoriale
        
         kin=0
         do mu=0, 2
@@ -60,23 +82,22 @@ contains
            kin=call(jump(phi, mu)) + call(jump(phi, nu)
         end do
     
-        y+= -phi*kin + 0.5_dp*k*phi*phi+ & !spero faccia il prodotto elemento per elemento a quel punto posso togliere il loop su i
-             0.0416666666666666_dp**phi*phi*phi*phi
-    end do
+        y=sum(-phi*kin + 0.5_dp*k*phi*phi+ & 
+             0.0416666666666666_dp*phi*phi*phi*phi) ! sommo su tutte le posizioni, quindi su tutti gli elementi dell'array
+        
   end subroutine S
 
-  subroutine init_pi(dim,pi)
-    real(dp), intent(in) :: phi(:,:,:)
+  subroutine init_pi(L,pi)
     real(dp), allocatable :: x(:,:,:)
     real(dp), intent(out) :: pi(:,:,:)
-    integer, intent(in) :: dim
+    integer, intent(in) :: L
     integer :: i
 
-    allocate(x(dim,dim,dim))
-    allocate(pi(dim,dim,dim))  
+    allocate(x(L,L,L))
+    allocate(pi(L,L,L))  
     call random_number(x)
 
-    do i=1,dim
+    do i=1,L
        pi(i,:,:)=sqrt(-2*log(1-x(i:,:)))*cos(2*pigreco*(1-x(i,:,:)))
        pi(:,i,:)=sqrt(-2*log(1-x(:,i,:)))*cos(2*pigreco*(1-x(:,i,:)))
        pi(:,:,i)=sqrt(-2*log(1-x(:,:,i)))*cos(2*pigreco*(1-x(:,:,i)))
@@ -98,17 +119,20 @@ contains
            kin(:,:,:)=call(jump(phi, mu)) + call(jump(phi, nu)
         end do
         
-    y=-kin+ k*phi + 0.166666666666666_dp*phi*phi*phi !devo stare attento perche voglio che le componenti siano elevate al cubo e non siano fatti prodotti scalari
+    y=-kin+ k*phi + 0.166666666666666_dp*phi*phi*phi ! voglio che ogni componente dell'array sia elevato al cubo
   end subroutine grad_s
 
   function H(phi,pi) return(y)
-    real(dp), intent(in) :: action
+    real(dp) :: action
+    real(dp) :: ham_kin 
     real(dp), intent(in) :: pi(:,:,:)
     real(dp), intent(in) :: phi(:,:,:)
     real(dp), intent(out) :: y
    
     action=call(S(phi))
-    y=action + pi*pi
+    ham_kin=sum(pi*pi)  
+    y=action +0.5_dp*ham_kin
+    
   end function H
   
   
