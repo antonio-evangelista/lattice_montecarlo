@@ -6,7 +6,7 @@ FC = gfortran
 #sbroccare e farne vedere dumila
 #la lettera o maiusc = ottimizzazione, buon livello è 2, per far andare
 #il codice più veloce
-FFLAGS = -fmax-errors=3 # -O2
+FFLAGS = -fmax-errors=3 -g -O0
 
 #GCC = gcc
 #qui commento con il cancelletto
@@ -37,5 +37,6 @@ clean:
 	rm *.mod *.o $(TARGET)
 
 #manca specificare l'albero delle dipendenze
-main.o: function.o solver.o
-solver.o: functions.o
+main.o: function.o solver.o precision.o
+solver.o: function.o precision.o
+function.o: precision.o
